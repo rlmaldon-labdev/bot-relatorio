@@ -1,0 +1,40 @@
+{
+    "_comentario": "COPIE ESTE ARQUIVO PARA config.json E PREENCHA OS VALORES",
+    "_instrucoes": "cp config.example.json config.json",
+    "google_sheets": {
+        "arquivo_credenciais": "credenciais.json",
+        "nome_planilha": "Controle Processual",
+        "_ajuda_credenciais": "Baixe o JSON da Service Account em https://console.cloud.google.com/iam-admin/serviceaccounts"
+    },
+    "ia": {
+        "provedor": "gemini",
+        "_provedores_disponiveis": [
+            "gemini",
+            "ollama"
+        ],
+        "gemini": {
+            "api_key": "SUA_CHAVE_GEMINI_AQUI",
+            "modelo": "gemini-2.5-flash",
+            "_obter_chave": "https://aistudio.google.com/apikey"
+        },
+        "ollama": {
+            "url": "http://localhost:11434",
+            "modelo": "llama3.1:8b-instruct-q4_K_M"
+        }
+    },
+    "api_comunica": {
+        "url_base": "https://comunicaapi.pje.jus.br/api/v1",
+        "delay_entre_consultas": 2,
+        "max_publicacoes_analisar": 3,
+        "timeout": 30
+    },
+    "planilha": {
+        "coluna_processo": "Processo",
+        "coluna_status": "Status_Atual",
+        "coluna_ultima_verificacao": "Ultima_Verificacao",
+        "coluna_resumo_ia": "Resumo_IA",
+        "coluna_ultima_publicacao": "Ultima_Publicacao",
+        "coluna_tipo_ultima": "Tipo_Ultima_Publicacao"
+    },
+    "debug": false
+}

@@ -1,0 +1,97 @@
+# ========================================
+# Bot Consulta Processual - .gitignore
+# ========================================
+
+# ========================================
+# CREDENCIAIS E SEGREDOS (NUNCA COMMITAR!)
+# ========================================
+credenciais.json
+credentials.json
+service_account.json
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+
+# ========================================
+# CONFIGURAÇÃO LOCAL
+# ========================================
+config.json
+!config.example.json
+
+# ========================================
+# PYTHON
+# ========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Ambientes virtuais
+venv/
+ENV/
+env/
+.venv/
+
+# ========================================
+# IDEs E EDITORES
+# ========================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# ========================================
+# LOGS E CACHE
+# ========================================
+*.log
+Log.txt
+logs/
+cache/
+.cache/
+.pytest_cache/
+*.tmp
+*.temp
+
+# ========================================
+# SISTEMA OPERACIONAL
+# ========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ========================================
+# ARQUIVOS DE TESTE/DEBUG
+# ========================================
+test_output/
+debug/
+*.debug
+scratch/

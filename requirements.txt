@@ -1,0 +1,12 @@
+# requirements.txt
+# Bot Consulta Processual - Dependências
+
+# HTTP requests
+requests>=2.28.0
+
+# Google Sheets
+gspread>=5.10.0
+google-auth>=2.20.0
+
+# Opcional: para usar .env ao invés de config.json
+# python-dotenv>=1.0.0
