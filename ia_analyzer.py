@@ -40,7 +40,7 @@ DIRETRIZES OBRIGATÓRIAS PARA O CAMPO 'RESUMO':
 
 RESPONDA em formato JSON:
 {{
-    "resumo": "Texto objetivo (máx 600 caracteres). Exemplo: 'Juiz condenou Empresa ABC a pagar R$ 15.000 + honorários de 10%. Prazo de 15 dias para pagamento voluntário sob pena de multa de 10%.'",
+    "resumo": "Texto objetivo (máx 1500 caracteres). Exemplo: 'Juiz condenou Empresa ABC a pagar R$ 15.000 + honorários de 10%. Prazo de 15 dias para pagamento voluntário sob pena de multa de 10%.'",
     "situacao": "Uma tag: PROVAS, ARQUIVADO, ACORDO, SENTENCA, RECURSAL ou NORMAL",
     "prazo": "Se houver prazo correndo, qual é (ex: '15 dias para manifestação'). Se não, null",
     "proxima_acao": "O que o advogado deve fazer, se houver (ex: 'Protocolar recurso até 02/03/2026'). Se não, null"
@@ -115,11 +115,18 @@ class AnaliseIA:
             
             texto = texto.strip()
             
-            # Tenta encontrar JSON na resposta
-            json_str = self._extrair_json(texto)
+            # Tenta parse direto (funciona quando responseMimeType = application/json)
+            try:
+                dados = json.loads(texto)
+            except (json.JSONDecodeError, ValueError):
+                # Fallback: tenta encontrar JSON por contagem de chaves
+                json_str = self._extrair_json(texto)
+                if json_str:
+                    dados = json.loads(json_str)
+                else:
+                    dados = None
             
-            if json_str:
-                dados = json.loads(json_str)
+            if dados and isinstance(dados, dict):
                 
                 self.resumo = dados.get("resumo", "")
                 self.situacao = dados.get("situacao", "NORMAL").upper()
@@ -135,7 +142,7 @@ class AnaliseIA:
                     self.proxima_acao = campos.get("proxima_acao")
                 else:
                     # Se nao encontrou JSON, usa o texto como resumo
-                    self.resumo = texto[:200] if texto else "Nao foi possivel analisar"
+                    self.resumo = texto[:1500] if texto else "Nao foi possivel analisar"
                     self.aviso = "Resposta nao contem JSON valido"
                     self.erro = None
         except json.JSONDecodeError as e:
@@ -151,7 +158,7 @@ class AnaliseIA:
                 except Exception:
                     pass
             
-            self.resumo = self.raw[:200] if self.raw else "Erro na analise"
+            self.resumo = self.raw[:1500] if self.raw else "Erro na analise"
             self.aviso = f"JSON invalido: {e}"
             self.erro = None
         
@@ -250,8 +257,8 @@ class IAProvider(ABC):
         
         for i, pub in enumerate(publicacoes, 1):
             texto_limpo = pub.texto_limpo
-            if len(texto_limpo) > 1500:
-                texto_limpo = texto_limpo[:1500] + "..."
+            if len(texto_limpo) > 2000:
+                texto_limpo = texto_limpo[:2000] + "..."
             
             partes.append(f"""[{i}] Data: {pub.data_formatada}
 Tipo: {pub.tipo_comunicacao}
@@ -324,8 +331,11 @@ class GeminiProvider(IAProvider):
         if not publicacoes:
             return AnaliseIA('{"resumo": "Sem publicações para analisar", "situacao": "NORMAL"}')
         
+        # Limita às 2 publicações mais recentes (já vêm ordenadas da mais recente)
+        publicacoes_recentes = publicacoes[:2]
+        
         prompt = PROMPT_GEMINI.format(
-            publicacoes=self._formatar_publicacoes(publicacoes)
+            publicacoes=self._formatar_publicacoes(publicacoes_recentes)
         )
         
         try:
@@ -336,7 +346,7 @@ class GeminiProvider(IAProvider):
                 json={
                     "contents": [{"parts": [{"text": prompt}]}],
                     "generationConfig": {
-                        "maxOutputTokens": 2000,
+                        "maxOutputTokens": 8192,
                         "temperature": 0.1,  # Mais determinístico
                         "responseMimeType": "application/json"
                     }

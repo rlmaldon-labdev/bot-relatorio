@@ -69,9 +69,10 @@ def limpar_resumo_planilha(resumo: str) -> str:
         return ""
     
     texto = resumo.strip()
-    texto_lower = texto.lower()
     
-    if texto.startswith("{") or "resumo" in texto_lower:
+    # Se parece ser JSON bruto, tenta extrair o campo "resumo"
+    if texto.startswith("{") or '"resumo"' in texto.lower():
+        # Primeiro tenta parse JSON correto
         try:
             dados = json.loads(texto)
             if isinstance(dados, dict) and "resumo" in dados:
@@ -79,16 +80,15 @@ def limpar_resumo_planilha(resumo: str) -> str:
         except Exception:
             pass
         
+        # Fallback: extrai por regex (JSON malformado)
+        match = re.search(r'"resumo"\s*:\s*"((?:[^"\\]|\\.)*)"', texto, flags=re.DOTALL)
+        if match:
+            return match.group(1).strip()
+        
+        # Ultimo recurso: remove estrutura JSON e retorna texto
         texto = re.sub(r'^[{\s]*', '', texto)
         texto = re.sub(r'}\s*$', '', texto)
         texto = re.sub(r'"?resumo"?\s*[:\-]?\s*', '', texto, flags=re.IGNORECASE)
-        
-        for chave in ("situacao", "prazo", "proxima_acao", "proxima acao"):
-            idx = texto.lower().find(chave)
-            if idx > 0:
-                texto = texto[:idx].strip().rstrip(",")
-                break
-        
         texto = texto.strip().strip('"').strip("'")
     
     return texto
