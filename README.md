@@ -88,7 +88,7 @@ A planilha deve ter as seguintes colunas (nomes podem variar):
 | `Processo` | Número do processo (formato CNJ) |
 | `Status_Atual` | Preenchido pelo bot |
 | `Ultima_Verificacao` | Preenchido pelo bot |
-| `Resumo_IA` | Preenchido pelo bot |
+| `Andamento Atual` | Preenchido pelo bot |
 | `Ultima_Publicacao` | Preenchido pelo bot |
 | `Tipo_Ultima_Publicacao` | Preenchido pelo bot |
 
@@ -151,7 +151,7 @@ A nova planilha deve ter as mesmas colunas (ou configure nomes diferentes em `co
 | `Processo` | `coluna_processo` |
 | `Status_Atual` | `coluna_status` |
 | `Ultima_Verificacao` | `coluna_ultima_verificacao` |
-| `Resumo_IA` | `coluna_resumo_ia` |
+| `Andamento Atual` | `coluna_resumo_ia` |
 | `Ultima_Publicacao` | `coluna_ultima_publicacao` |
 | `Tipo_Ultima_Publicacao` | `coluna_tipo_ultima` |
 

@@ -149,7 +149,7 @@ class Config:
         """Modelo do Gemini a usar."""
         return os.getenv(
             "GEMINI_MODEL",
-            self.get("ia", "gemini", "modelo", default="gemini-2.0-flash")
+            self.get("ia", "gemini", "modelo", default="gemini-3-flash-preview")
         )
     
     @property

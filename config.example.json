@@ -32,7 +32,7 @@
         "coluna_processo": "Processo",
         "coluna_status": "Status_Atual",
         "coluna_ultima_verificacao": "Ultima_Verificacao",
-        "coluna_resumo_ia": "Resumo_IA",
+        "coluna_resumo_ia": "Andamento Atual",
         "coluna_ultima_publicacao": "Ultima_Publicacao",
         "coluna_tipo_ultima": "Tipo_Ultima_Publicacao"
     },

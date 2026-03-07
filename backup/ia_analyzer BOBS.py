@@ -22,47 +22,36 @@ from api_comunica import Publicacao
 # ============================================================
 
 # Prompt para Gemini (mais curto, modelo mais inteligente)
-PROMPT_GEMINI = """Atue como um Analista Juridico Senior focado em relatorios executivos para clientes.
-Sua tarefa e analisar as publicacoes do Diario de Justica e extrair a informacao crucial para uma planilha de acompanhamento.
+PROMPT_GEMINI = """Você é um assistente jurídico especializado em análise de publicações do Diário de Justiça.
 
-PUBLICACOES (contexto da mais recente para a mais antiga):
+PUBLICAÇÕES (da mais recente para a mais antiga):
 {publicacoes}
-
-DIRETRIZES OBRIGATORIAS PARA O CAMPO 'RESUMO':
-1. NAO inicie com frases genericas ("Trata-se de...", "O processo refere-se a...", "Foi publicada decisao...").
-2. Va direto a decisao/ato: [O QUE O JUIZ DECIDIU] + [CONSEQUENCIA PRATICA].
-3. SEMPRE inclua, se disponiveis:
-   - Valores monetarios mencionados (divida, custas, honorarios, multas)
-   - Prazos especificos (X dias para fazer Y)
-4. Traduza o "juridiques" para linguagem de negocios. (Ex: troque "Deferida a dilacao de prazo" por "Juiz concedeu mais tempo").
-5. Se a publicacao for apenas despacho administrativo (ex: "Junte-se", "Intime-se"), consulte publicacoes anteriores para contextualizar sobre o que e a intimacao.
-6. NUNCA termine o resumo com "o teor nao foi disponibilizado" ou similar - extraia o maximo de informacao possivel do que esta disponivel.
 
 RESPONDA em formato JSON:
 {{
-    "resumo": "Texto objetivo (max 450 caracteres, ate 2 frases). Exemplo: 'Juiz condenou Empresa ABC a pagar R$ 15.000 + honorarios de 10%. Prazo de 15 dias para pagamento voluntario sob pena de multa de 10%.'",
-    "situacao": "Uma tag: PROVAS, ARQUIVADO, ACORDO, SENTENCA, RECURSAL ou NORMAL",
-    "prazo": "Se houver prazo correndo, qual e (ex: '15 dias para manifestacao'). Se nao, null",
-    "proxima_acao": "O que o advogado deve fazer, se houver (ex: 'Protocolar recurso ate 02/03/2026'). Se nao, null"
+    "resumo": "Resumo em 3 frases do status atual do processo",
+    "situacao": "Uma palavra: URGENTE, AGUARDANDO, ARQUIVADO, ACORDO, SENTENCA, ou NORMAL",
+    "prazo": "Se houver prazo correndo, qual é. Se não, null",
+    "proxima_acao": "O que o advogado deve fazer, se houver. Se não, null"
 }}
 
-Responda APENAS o JSON, sem explicacoes."""
+Responda APENAS o JSON, sem explicações."""
 
 
 # Prompt para Ollama (mais detalhado, modelo menos inteligente)
-PROMPT_OLLAMA = """Voce e um assistente juridico especializado em analise de publicacoes do Diario de Justica.
+PROMPT_OLLAMA = """Você é um assistente jurídico especializado em análise de publicações do Diário de Justiça.
 
-Sua tarefa e analisar as publicacoes de um processo judicial e fornecer um resumo objetivo.
+Sua tarefa é analisar as publicações de um processo judicial e fornecer um resumo objetivo.
 
 REGRAS IMPORTANTES:
-1. Seja CONCISO - maximo 2 frases no resumo
-2. Identifique se ha PRAZO correndo para o advogado
-3. Identifique se ha AUDIENCIA marcada
-4. Classifique a situacao: URGENTE, AGUARDANDO, ARQUIVADO, ACORDO, SENTENCA, ou NORMAL
-5. Responda APENAS em formato JSON valido
-6. NAO invente informacoes que nao estao nas publicacoes
+1. Seja CONCISO - máximo 3 frases no resumo
+2. Identifique se há PRAZO correndo para o advogado
+3. Identifique se há AUDIÊNCIA marcada
+4. Classifique a situação: URGENTE, AGUARDANDO, ARQUIVADO, ACORDO, SENTENCA, ou NORMAL
+5. Responda APENAS em formato JSON válido
+6. NÃO invente informações que não estão nas publicações
 
-PUBLICACOES DO PROCESSO (da mais recente para a mais antiga):
+PUBLICAÇÕES DO PROCESSO (da mais recente para a mais antiga):
 
 {publicacoes}
 
@@ -71,10 +60,10 @@ PUBLICACOES DO PROCESSO (da mais recente para a mais antiga):
 Agora analise e responda EXATAMENTE neste formato JSON (sem texto antes ou depois):
 
 {{
-    "resumo": "Escreva aqui um resumo de 2 frases do status atual",
+    "resumo": "Escreva aqui um resumo de 3 frases do status atual",
     "situacao": "URGENTE ou AGUARDANDO ou ARQUIVADO ou ACORDO ou SENTENCA ou NORMAL",
-    "prazo": "Descreva o prazo se houver, ou null se nao houver",
-    "proxima_acao": "O que fazer se necessario, ou null"
+    "prazo": "Descreva o prazo se houver, ou null se não houver",
+    "proxima_acao": "O que fazer se necessário, ou null"
 }}
 
 JSON:"""
@@ -115,18 +104,11 @@ class AnaliseIA:
             
             texto = texto.strip()
             
-            # Tenta parse direto (funciona quando responseMimeType = application/json)
-            try:
-                dados = json.loads(texto)
-            except (json.JSONDecodeError, ValueError):
-                # Fallback: tenta encontrar JSON por contagem de chaves
-                json_str = self._extrair_json(texto)
-                if json_str:
-                    dados = json.loads(json_str)
-                else:
-                    dados = None
+            # Tenta encontrar JSON na resposta
+            json_str = self._extrair_json(texto)
             
-            if dados and isinstance(dados, dict):
+            if json_str:
+                dados = json.loads(json_str)
                 
                 self.resumo = dados.get("resumo", "")
                 self.situacao = dados.get("situacao", "NORMAL").upper()
@@ -142,7 +124,7 @@ class AnaliseIA:
                     self.proxima_acao = campos.get("proxima_acao")
                 else:
                     # Se nao encontrou JSON, usa o texto como resumo
-                    self.resumo = texto[:1500] if texto else "Nao foi possivel analisar"
+                    self.resumo = texto[:200] if texto else "Nao foi possivel analisar"
                     self.aviso = "Resposta nao contem JSON valido"
                     self.erro = None
         except json.JSONDecodeError as e:
@@ -158,7 +140,7 @@ class AnaliseIA:
                 except Exception:
                     pass
             
-            self.resumo = self.raw[:1500] if self.raw else "Erro na analise"
+            self.resumo = self.raw[:200] if self.raw else "Erro na analise"
             self.aviso = f"JSON invalido: {e}"
             self.erro = None
         
@@ -257,8 +239,8 @@ class IAProvider(ABC):
         
         for i, pub in enumerate(publicacoes, 1):
             texto_limpo = pub.texto_limpo
-            if len(texto_limpo) > 2000:
-                texto_limpo = texto_limpo[:2000] + "..."
+            if len(texto_limpo) > 500:
+                texto_limpo = texto_limpo[:500] + "..."
             
             partes.append(f"""[{i}] Data: {pub.data_formatada}
 Tipo: {pub.tipo_comunicacao}
@@ -331,11 +313,8 @@ class GeminiProvider(IAProvider):
         if not publicacoes:
             return AnaliseIA('{"resumo": "Sem publicações para analisar", "situacao": "NORMAL"}')
         
-        # Limita às 2 publicações mais recentes (já vêm ordenadas da mais recente)
-        publicacoes_recentes = publicacoes[:2]
-        
         prompt = PROMPT_GEMINI.format(
-            publicacoes=self._formatar_publicacoes(publicacoes_recentes)
+            publicacoes=self._formatar_publicacoes(publicacoes)
         )
         
         try:
@@ -346,7 +325,7 @@ class GeminiProvider(IAProvider):
                 json={
                     "contents": [{"parts": [{"text": prompt}]}],
                     "generationConfig": {
-                        "maxOutputTokens": 8192,
+                        "maxOutputTokens": 1500,
                         "temperature": 0.1,  # Mais determinístico
                         "responseMimeType": "application/json"
                     }
@@ -484,4 +463,3 @@ def get_analyzer() -> IAProvider:
     if _provider is None:
         _provider = get_ia_provider()
     return _provider
-
